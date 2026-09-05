@@ -48,8 +48,8 @@ type = "url"
 url = "https://www.svtplay.se"
 
 [[apps]]
-name = "Steam Link"
-icon = "steamlink.png"
+name = "Steam"
+icon = "steam.png"
 [apps.action]
 type = "command"
-command = "steam-link"
+command = "steam"
