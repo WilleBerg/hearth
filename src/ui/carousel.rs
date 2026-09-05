@@ -15,6 +15,8 @@ pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a
     let content = row(tiles).spacing(SPACING);
 
     scrollable(content)
-        .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::new()))
+        .direction(scrollable::Direction::Horizontal(
+            scrollable::Scrollbar::hidden(),
+        ))
         .into()
 }
