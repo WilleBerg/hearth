@@ -1,4 +1,4 @@
-use iced::widget::row;
+use iced::widget::{row, scrollable};
 use iced::Element;
 
 use crate::config::AppEntry;
@@ -12,5 +12,9 @@ pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a
         .enumerate()
         .map(|(index, app)| tile::view(app, index == focused));
 
-    row(tiles).spacing(SPACING).into()
+    let content = row(tiles).spacing(SPACING);
+
+    scrollable(content)
+        .direction(scrollable::Direction::Horizontal(scrollable::Scrollbar::new()))
+        .into()
 }
