@@ -34,7 +34,7 @@ impl Hub {
             Message::Quit => window::latest().and_then(window::close),
             Message::Navigate(direction) => {
                 self.focused = carousel::next_index(self.focused, direction, self.apps.len());
-                Task::none()
+                carousel::scroll_to_focused(self.focused, self.apps.len())
             }
             Message::Select => {
                 if let Some(app) = self.apps.get(self.focused) {

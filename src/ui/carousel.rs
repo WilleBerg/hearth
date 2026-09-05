@@ -1,10 +1,11 @@
-use iced::widget::{row, scrollable};
-use iced::Element;
+use iced::widget::{operation, row, scrollable};
+use iced::{Element, Task};
 
 use crate::config::AppEntry;
 use crate::ui::tile;
 
 pub const SPACING: f32 = 24.0;
+const ID: &str = "carousel";
 
 pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a, Message> {
     let tiles = apps
@@ -15,10 +16,23 @@ pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a
     let content = row(tiles).spacing(SPACING);
 
     scrollable(content)
+        .id(ID)
         .direction(scrollable::Direction::Horizontal(
             scrollable::Scrollbar::hidden(),
         ))
         .into()
+}
+
+/// Scrolls so the focused tile is brought into view, proportionally to its
+/// position among `total` tiles (0 = fully scrolled left, 1 = fully right).
+pub fn scroll_to_focused<Message: 'static>(focused: usize, total: usize) -> Task<Message> {
+    let x = if total <= 1 {
+        0.0
+    } else {
+        focused as f32 / (total - 1) as f32
+    };
+
+    operation::snap_to(ID, operation::RelativeOffset { x, y: 0.0 })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
