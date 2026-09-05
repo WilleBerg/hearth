@@ -6,3 +6,5 @@ publish = false
 
 [dependencies]
 iced = "0.14"
+serde = { version = "1.0.229", features = ["derive"] }
+toml = "1.1.5"

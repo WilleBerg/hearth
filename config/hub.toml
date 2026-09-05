@@ -1,0 +1,55 @@
+# Hearth hub configuration.
+#
+# Each [[apps]] entry defines one carousel tile: a name, an icon (a
+# filename resolved relative to assets/icons/), and an action to launch
+# when selected — either a web URL (opened in a browser) or a native
+# command.
+
+[[apps]]
+name = "Plex"
+icon = "plex.png"
+[apps.action]
+type = "url"
+url = "http://plex.local"
+
+[[apps]]
+name = "YouTube"
+icon = "youtube.png"
+[apps.action]
+type = "url"
+url = "https://youtube.com"
+
+[[apps]]
+name = "Twitch"
+icon = "twitch.png"
+[apps.action]
+type = "url"
+url = "https://twitch.tv"
+
+[[apps]]
+name = "Kodi"
+icon = "kodi.png"
+[apps.action]
+type = "command"
+command = "kodi"
+
+[[apps]]
+name = "TV4"
+icon = "tv4.png"
+[apps.action]
+type = "url"
+url = "https://www.tv4play.se"
+
+[[apps]]
+name = "SVT"
+icon = "svt.png"
+[apps.action]
+type = "url"
+url = "https://www.svtplay.se"
+
+[[apps]]
+name = "Steam"
+icon = "steam.png"
+[apps.action]
+type = "command"
+command = "steam"
