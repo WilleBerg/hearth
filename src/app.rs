@@ -5,6 +5,7 @@ use iced::{window, Element, Subscription, Task};
 use crate::config::{AppEntry, Config};
 
 const PLACEHOLDER_SIZE: f32 = 24.0;
+const PLACEHOLDER_SPACING: f32 = 8.0;
 
 pub struct Hub {
     apps: Vec<AppEntry>,
@@ -44,7 +45,10 @@ impl Hub {
             text(label).size(PLACEHOLDER_SIZE).into()
         });
 
-        column(entries).spacing(8).padding(PLACEHOLDER_SIZE).into()
+        column(entries)
+            .spacing(PLACEHOLDER_SPACING)
+            .padding(PLACEHOLDER_SIZE)
+            .into()
     }
 
     pub fn subscription(&self) -> Subscription<Message> {
