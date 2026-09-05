@@ -23,16 +23,17 @@ pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a
         .into()
 }
 
-/// Scrolls so the focused tile is brought into view, proportionally to its
-/// position among `total` tiles (0 = fully scrolled left, 1 = fully right).
+/// Scrolls only when focus reaches the first or last tile, snapping fully to
+/// that edge. Every other step leaves the scroll position untouched, so
+/// browsing tiles that are already visible doesn't shift the view at all.
 pub fn scroll_to_focused<Message: 'static>(focused: usize, total: usize) -> Task<Message> {
-    let x = if total <= 1 {
-        0.0
+    if focused == 0 {
+        operation::snap_to(ID, operation::RelativeOffset::START)
+    } else if total > 0 && focused == total - 1 {
+        operation::snap_to(ID, operation::RelativeOffset::END)
     } else {
-        focused as f32 / (total - 1) as f32
-    };
-
-    operation::snap_to(ID, operation::RelativeOffset { x, y: 0.0 })
+        Task::none()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
