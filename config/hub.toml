@@ -7,49 +7,49 @@
 
 [[apps]]
 name = "Plex"
-icon = "plex.png"
+icon = "plex.svg"
 [apps.action]
 type = "url"
 url = "http://plex.local"
 
 [[apps]]
 name = "YouTube"
-icon = "youtube.png"
+icon = "youtube.svg"
 [apps.action]
 type = "url"
 url = "https://youtube.com"
 
 [[apps]]
 name = "Twitch"
-icon = "twitch.png"
+icon = "twitch.svg"
 [apps.action]
 type = "url"
 url = "https://twitch.tv"
 
 [[apps]]
 name = "Kodi"
-icon = "kodi.png"
+icon = "kodi.svg"
 [apps.action]
 type = "command"
 command = "kodi"
 
 [[apps]]
 name = "TV4"
-icon = "tv4.png"
+icon = "tv4.svg"
 [apps.action]
 type = "url"
 url = "https://www.tv4play.se"
 
 [[apps]]
 name = "SVT"
-icon = "svt.png"
+icon = "svt.svg"
 [apps.action]
 type = "url"
 url = "https://www.svtplay.se"
 
 [[apps]]
 name = "Steam"
-icon = "steam.png"
+icon = "steam.svg"
 [apps.action]
 type = "command"
 command = "steam"

@@ -1,11 +1,9 @@
 use iced::keyboard;
-use iced::widget::{column, text};
-use iced::{window, Element, Subscription, Task};
+use iced::widget::{column, container, Space};
+use iced::{window, Element, Length, Subscription, Task};
 
 use crate::config::{AppEntry, Config};
-
-const PLACEHOLDER_SIZE: f32 = 24.0;
-const PLACEHOLDER_SPACING: f32 = 8.0;
+use crate::ui::{carousel, theme};
 
 pub struct Hub {
     apps: Vec<AppEntry>,
@@ -36,18 +34,18 @@ impl Hub {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        let entries = self.apps.iter().enumerate().map(|(index, app)| {
-            let label = if index == self.focused {
-                format!("> {}", app.name)
-            } else {
-                app.name.clone()
-            };
-            text(label).size(PLACEHOLDER_SIZE).into()
-        });
+        let content = column![
+            Space::new().height(Length::Fill),
+            carousel::view(&self.apps, self.focused),
+        ]
+        .width(Length::Fill)
+        .height(Length::Fill)
+        .padding(theme::SCREEN_PADDING);
 
-        column(entries)
-            .spacing(PLACEHOLDER_SPACING)
-            .padding(PLACEHOLDER_SIZE)
+        container(content)
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .style(theme::root_container_style)
             .into()
     }
 
