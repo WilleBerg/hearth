@@ -13,6 +13,8 @@ pub struct Hub {
 #[derive(Debug, Clone)]
 pub enum Message {
     Quit,
+    Navigate(carousel::Direction),
+    Select,
 }
 
 impl Hub {
@@ -30,6 +32,16 @@ impl Hub {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::Quit => window::latest().and_then(window::close),
+            Message::Navigate(direction) => {
+                self.focused = carousel::next_index(self.focused, direction, self.apps.len());
+                carousel::scroll_to_focused(self.focused, self.apps.len())
+            }
+            Message::Select => {
+                if let Some(app) = self.apps.get(self.focused) {
+                    println!("selected: {}", app.name);
+                }
+                Task::none()
+            }
         }
     }
 
@@ -63,9 +75,15 @@ impl Hub {
 
         keyboard::listen().filter_map(|event| match event {
             keyboard::Event::KeyPressed {
-                key: keyboard::Key::Named(key::Named::Escape),
+                key: keyboard::Key::Named(named),
                 ..
-            } => Some(Message::Quit),
+            } => match named {
+                key::Named::Escape => Some(Message::Quit),
+                key::Named::ArrowLeft => Some(Message::Navigate(carousel::Direction::Left)),
+                key::Named::ArrowRight => Some(Message::Navigate(carousel::Direction::Right)),
+                key::Named::Enter => Some(Message::Select),
+                _ => None,
+            },
             _ => None,
         })
     }
