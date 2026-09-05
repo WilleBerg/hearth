@@ -3,6 +3,12 @@ use iced::{color, Background, Border, Color, Theme};
 
 pub const SCREEN_PADDING: f32 = 32.0;
 
+// Matches the design doc's mockup: app carousel gets 3/4 of the screen
+// width, the remaining 1/4 is reserved for the future "always there"
+// widgets column.
+pub const CAROUSEL_WIDTH_PORTION: u16 = 3;
+pub const RESERVED_WIDTH_PORTION: u16 = 1;
+
 pub const TILE_BORDER_WIDTH_FOCUSED: f32 = 4.0;
 pub const TILE_BORDER_WIDTH_UNFOCUSED: f32 = 1.0;
 pub const TILE_CORNER_RADIUS: f32 = 8.0;

@@ -1,5 +1,5 @@
 use iced::keyboard;
-use iced::widget::{column, container, Space};
+use iced::widget::{column, container, row, Space};
 use iced::{window, Element, Length, Subscription, Task};
 
 use crate::config::{AppEntry, Config};
@@ -34,13 +34,22 @@ impl Hub {
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        let content = column![
+        let carousel_column = column![
             Space::new().height(Length::Fill),
             carousel::view(&self.apps, self.focused),
         ]
-        .width(Length::Fill)
-        .height(Length::Fill)
-        .padding(theme::SCREEN_PADDING);
+        .width(Length::FillPortion(theme::CAROUSEL_WIDTH_PORTION))
+        .height(Length::Fill);
+
+        // Reserved for the future "always there" widgets column.
+        let reserved = Space::new()
+            .width(Length::FillPortion(theme::RESERVED_WIDTH_PORTION))
+            .height(Length::Fill);
+
+        let content = row![carousel_column, reserved]
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .padding(theme::SCREEN_PADDING);
 
         container(content)
             .width(Length::Fill)
