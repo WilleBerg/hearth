@@ -1,26 +1,59 @@
-use iced::widget::text;
-use iced::{Element, Task};
+use iced::keyboard;
+use iced::widget::{column, text};
+use iced::{window, Element, Subscription, Task};
 
-#[derive(Debug, Default)]
-pub struct Hub;
+use crate::config::{AppEntry, Config};
+
+pub struct Hub {
+    apps: Vec<AppEntry>,
+    focused: usize,
+}
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    Noop,
+    Quit,
 }
 
 impl Hub {
     pub fn new() -> (Self, Task<Message>) {
-        (Self, Task::none())
+        let config = Config::load_default(None);
+        (
+            Self {
+                apps: config.apps,
+                focused: 0,
+            },
+            Task::none(),
+        )
     }
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
-            Message::Noop => Task::none(),
+            Message::Quit => window::latest().and_then(window::close),
         }
     }
 
     pub fn view(&self) -> Element<'_, Message> {
-        text("Hearth").size(32).into()
+        let entries = self.apps.iter().enumerate().map(|(index, app)| {
+            let label = if index == self.focused {
+                format!("> {}", app.name)
+            } else {
+                app.name.clone()
+            };
+            text(label).size(24).into()
+        });
+
+        column(entries).spacing(8).padding(24).into()
+    }
+
+    pub fn subscription(&self) -> Subscription<Message> {
+        use keyboard::key;
+
+        keyboard::listen().filter_map(|event| match event {
+            keyboard::Event::KeyPressed {
+                key: keyboard::Key::Named(key::Named::Escape),
+                ..
+            } => Some(Message::Quit),
+            _ => None,
+        })
     }
 }
