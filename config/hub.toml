@@ -46,3 +46,10 @@ icon = "svt.png"
 [apps.action]
 type = "url"
 url = "https://www.svtplay.se"
+
+[[apps]]
+name = "Steam Link"
+icon = "steamlink.png"
+[apps.action]
+type = "command"
+command = "steam-link"

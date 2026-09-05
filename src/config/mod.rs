@@ -67,17 +67,12 @@ impl From<toml::de::Error> for ConfigError {
 }
 
 impl Config {
-    /// Strictly load and parse a config file at `path`, failing on any I/O
-    /// or parse error.
     pub fn load(path: &Path) -> Result<Config, ConfigError> {
         let contents = fs::read_to_string(path)?;
         let config = toml::from_str(&contents)?;
         Ok(config)
     }
 
-    /// Load from `explicit` if given, else [`DEFAULT_CONFIG_PATH`]. Never
-    /// fails: falls back to a small set of built-in placeholder entries
-    /// (logging a warning) so the hub always has something to show.
     pub fn load_default(explicit: Option<&Path>) -> Config {
         let path = explicit.unwrap_or_else(|| Path::new(DEFAULT_CONFIG_PATH));
         match Config::load(path) {
@@ -216,9 +211,9 @@ mod tests {
     }
 
     #[test]
-    fn shipped_hub_toml_parses_and_has_six_entries() {
+    fn shipped_hub_toml_parses_and_has_seven_entries() {
         let path = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/config/hub.toml"));
         let config = Config::load(path).expect("config/hub.toml should parse");
-        assert_eq!(config.apps.len(), 6);
+        assert_eq!(config.apps.len(), 7);
     }
 }
