@@ -4,8 +4,6 @@ use iced::{window, Element, Subscription, Task};
 
 use crate::config::{AppEntry, Config};
 
-/// Placeholder text size, used for both the list text and the column
-/// padding below — a real theme/layout replaces this in PR-4.
 const PLACEHOLDER_SIZE: f32 = 24.0;
 
 pub struct Hub {
