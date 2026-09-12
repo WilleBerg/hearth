@@ -8,6 +8,7 @@ mod ui;
 use app::Hub;
 
 pub fn main() -> iced::Result {
+    env_logger::init();
     iced::application(Hub::new, Hub::update, Hub::view)
         .title("Hearth")
         .subscription(Hub::subscription)

@@ -1,12 +1,16 @@
 use iced::keyboard;
 use iced::widget::{column, container, row, Space};
 use iced::{window, Element, Length, Subscription, Task};
+use log::error;
 
-use crate::config::{AppEntry, Config};
+use crate::config::browsers::Browsers;
+use crate::config::{AppAction, AppEntry, Config};
+use crate::platform::{launch_command, launch_url};
 use crate::ui::{carousel, theme};
 
 pub struct Hub {
     apps: Vec<AppEntry>,
+    browsers: Browsers,
     focused: usize,
 }
 
@@ -20,9 +24,11 @@ pub enum Message {
 impl Hub {
     pub fn new() -> (Self, Task<Message>) {
         let config = Config::load_default(None);
+        let browsers = Browsers::load_default(None);
         (
             Self {
                 apps: config.apps,
+                browsers,
                 focused: 0,
             },
             Task::none(),
@@ -38,8 +44,22 @@ impl Hub {
             }
             Message::Select => {
                 if let Some(app) = self.apps.get(self.focused) {
-                    println!("selected: {}", app.name);
+                    match &app.action {
+                        AppAction::Url { url, browser } => {
+                            if let Err(err) =
+                                launch_url(url.clone(), browser.clone(), &self.browsers)
+                            {
+                                error!("Failed to launch url: {err}");
+                            }
+                        }
+                        AppAction::Command { command, args } => {
+                            if let Err(err) = launch_command(command.clone(), args.clone()) {
+                                error!("Failed to launch command: {err}");
+                            }
+                        }
+                    }
                 }
+                // TODO: Update top bar. Will need to create top bar first.
                 Task::none()
             }
         }

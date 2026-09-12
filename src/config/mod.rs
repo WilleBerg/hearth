@@ -1,11 +1,14 @@
 //! Loads and parses the TOML configuration that defines the app carousel:
-//! entries, icons, and launch actions.
+//! entries, icons, and launch actions. See `browsers` for the named browser
+//! launch profiles that `AppAction::Url` refers to.
 
 use std::fmt;
 use std::fs;
 use std::path::Path;
 
 use serde::Deserialize;
+
+pub mod browsers;
 
 /// Config path used when no explicit path is given, relative to the
 /// current working directory.
@@ -29,12 +32,33 @@ pub struct AppEntry {
 pub enum AppAction {
     Url {
         url: String,
+        /// Name of a profile in `Browsers::browsers`; falls back to
+        /// `Browsers::default` when absent.
         browser: Option<String>,
     },
     Command {
         command: String,
         args: Option<Vec<String>>,
     },
+}
+
+impl fmt::Display for AppAction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AppAction::Url { url, browser: None } => write!(f, "url {url}"),
+            AppAction::Url {
+                url,
+                browser: Some(browser),
+            } => write!(f, "url {url} (via {browser})"),
+            AppAction::Command { command, args } => {
+                write!(f, "command {command}")?;
+                if let Some(args) = args {
+                    write!(f, " {}", args.join(" "))?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 #[derive(Debug)]

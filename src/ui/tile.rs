@@ -14,12 +14,10 @@ const ICONS_DIR: &str = "assets/icons";
 
 pub fn view<'a, Message: 'a>(app: &AppEntry, focused: bool) -> Element<'a, Message> {
     let icon: Element<'_, Message> = match &app.icon {
-        Some(filename) => svg(svg::Handle::from_path(format!(
-            "{ICONS_DIR}/{filename}"
-        )))
-        .width(ICON_SIZE)
-        .height(ICON_SIZE)
-        .into(),
+        Some(filename) => svg(svg::Handle::from_path(format!("{ICONS_DIR}/{filename}")))
+            .width(ICON_SIZE)
+            .height(ICON_SIZE)
+            .into(),
         None => Space::new().width(ICON_SIZE).height(ICON_SIZE).into(),
     };
 

@@ -5,6 +5,8 @@ edition = "2021"
 publish = false
 
 [dependencies]
+env_logger = "0.11.11"
 iced = { version = "0.14", features = ["svg"] }
+log = "0.4.34"
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.5"
