@@ -1,20 +1,9 @@
-alias b:= build
-
-clean:
-    cargo clean
-
-build:
-    cargo build
-
-test:
-    cargo test
-
-format:
-    cargo fmt 
-
-release-build:
+check:
     cargo check
+    cargo clippy
     cargo fmt
+
+release-build: check
     cargo build --release
 
 release-test:
