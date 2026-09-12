@@ -46,14 +46,12 @@ impl Hub {
                 if let Some(app) = self.apps.get(self.focused) {
                     match &app.action {
                         AppAction::Url { url, browser } => {
-                            if let Err(err) =
-                                launch_url(url.clone(), browser.clone(), &self.browsers)
-                            {
+                            if let Err(err) = launch_url(url, browser, &self.browsers) {
                                 error!("Failed to launch url: {err}");
                             }
                         }
                         AppAction::Command { command, args } => {
-                            if let Err(err) = launch_command(command.clone(), args.clone()) {
+                            if let Err(err) = launch_command(command, args.clone()) {
                                 error!("Failed to launch command: {err}");
                             }
                         }

@@ -3,11 +3,11 @@
 //! targets. Populated in a later milestone.
 //!
 
-use std::fmt;
 use std::process::Command;
+use std::{fmt, process::Child};
 
-use crate::config::browsers::Browsers;
-use log::{debug, info};
+use crate::config::browsers::{BrowserEntry, Browsers};
+use log::{debug, error, info};
 
 #[derive(Debug)]
 pub enum LaunchError {
@@ -33,37 +33,133 @@ impl std::error::Error for LaunchError {
     }
 }
 
-pub fn launch_command(command: String, args: Option<Vec<String>>) -> Result<(), LaunchError> {
+pub fn launch_command(command: &String, args: Option<Vec<String>>) -> Result<(), LaunchError> {
     let args = args.unwrap_or(vec![]);
     info!("Launching command: {command} {args:#?}");
-    let output = Command::new(command)
+    let child = Command::new(command)
         .args(args)
-        .output()
+        .spawn()
         .map_err(LaunchError::Spawn)?;
-    debug!("launch_command output: {output:#?}");
+    reap_in_background(child);
     Ok(())
 }
 
 pub fn launch_url(
-    url: String,
-    browser: Option<String>,
+    url: &String,
+    browser: &Option<String>,
     browsers: &Browsers,
 ) -> Result<(), LaunchError> {
-    let browser = browser
+    let browser = resolve_browser(browser, browsers)?;
+    info!(
+        "Launching url: {} {:?} {url}",
+        browser.command, browser.args
+    );
+    let child = Command::new(&browser.command)
+        .args(&browser.args)
+        .arg(url)
+        .spawn()
+        .map_err(LaunchError::Spawn)?;
+    reap_in_background(child);
+    Ok(())
+}
+
+/// Picks the named browser profile, falling back to the configured default
+/// when no name is given or the named profile doesn't exist.
+fn resolve_browser<'a>(
+    browser: &Option<String>,
+    browsers: &'a Browsers,
+) -> Result<&'a BrowserEntry, LaunchError> {
+    browser
         .as_ref()
         .and_then(|name| browsers.browsers.get(name))
         .or_else(|| browsers.browsers.get(&browsers.default))
-        .ok_or(LaunchError::NoDefaultBrowser)?;
-    let command = browser.command.clone();
-    let args = browser.args.clone();
-    info!("Launching url: {command} {args:#?} {url}");
-    let output = Command::new(command)
-        .args(args)
-        .arg(url)
-        .output()
-        .map_err(LaunchError::Spawn)?;
+        .ok_or(LaunchError::NoDefaultBrowser)
+}
 
-    debug!("launch_command output: {output:#?}");
+fn reap_in_background(mut child: Child) {
+    std::thread::spawn(move || match child.wait() {
+        Ok(status) => debug!("launched child proccess exited successfully with status {status}"),
+        Err(err) => error!("launched child proccess exited unsuccessfully: {err}"),
+    });
+}
 
-    Ok(())
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    fn browsers_with(default: &str, entries: &[(&str, &str)]) -> Browsers {
+        let browsers = entries
+            .iter()
+            .map(|(name, command)| {
+                (
+                    name.to_string(),
+                    BrowserEntry {
+                        command: command.to_string(),
+                        args: vec![],
+                    },
+                )
+            })
+            .collect::<HashMap<_, _>>();
+        Browsers {
+            default: default.to_string(),
+            browsers,
+        }
+    }
+
+    #[test]
+    fn resolve_browser_uses_named_browser_when_present() {
+        let browsers = browsers_with(
+            "chromium",
+            &[("chromium", "chromium"), ("firefox", "firefox")],
+        );
+        let resolved = resolve_browser(&Some("firefox".to_string()), &browsers).unwrap();
+        assert_eq!(resolved.command, "firefox");
+    }
+
+    #[test]
+    fn resolve_browser_falls_back_to_default_when_none_given() {
+        let browsers = browsers_with("chromium", &[("chromium", "chromium")]);
+        let resolved = resolve_browser(&None, &browsers).unwrap();
+        assert_eq!(resolved.command, "chromium");
+    }
+
+    #[test]
+    fn resolve_browser_falls_back_to_default_when_named_browser_unknown() {
+        let browsers = browsers_with("chromium", &[("chromium", "chromium")]);
+        let resolved = resolve_browser(&Some("does-not-exist".to_string()), &browsers).unwrap();
+        assert_eq!(resolved.command, "chromium");
+    }
+
+    #[test]
+    fn resolve_browser_errors_when_default_is_also_missing() {
+        let browsers = browsers_with("chromium", &[]);
+        let result = resolve_browser(&None, &browsers);
+        assert!(matches!(result, Err(LaunchError::NoDefaultBrowser)));
+    }
+
+    #[test]
+    fn launch_command_spawns_existing_binary() {
+        let result = launch_command(&"true".to_string(), None);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn launch_command_reports_error_for_missing_binary() {
+        let result = launch_command(&"this-binary-does-not-exist".to_string(), None);
+        assert!(matches!(result, Err(LaunchError::Spawn(_))));
+    }
+
+    #[test]
+    fn display_messages_are_human_readable() {
+        assert_eq!(
+            LaunchError::NoDefaultBrowser.to_string(),
+            "no default browser configured"
+        );
+
+        let io_err = std::io::Error::new(std::io::ErrorKind::NotFound, "binary not found");
+        assert!(LaunchError::Spawn(io_err)
+            .to_string()
+            .starts_with("failed to spawn process"));
+    }
 }
