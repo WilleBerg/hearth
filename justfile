@@ -1,7 +1,7 @@
 check:
     cargo check
     cargo clippy
-    cargo fmt
+    cargo fmt --check
 
 release-build: check
     cargo build --release
