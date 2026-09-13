@@ -3,11 +3,10 @@
 //! targets. Populated in a later milestone.
 //!
 
-use std::process::Command;
-use std::{fmt, process::Child};
+use std::fmt;
 
 use crate::config::browsers::{BrowserEntry, Browsers};
-use log::{debug, error, info};
+use log::{debug, info};
 
 #[derive(Debug)]
 pub enum LaunchError {
@@ -33,18 +32,22 @@ impl std::error::Error for LaunchError {
     }
 }
 
-pub fn launch_command(command: &String, args: Option<Vec<String>>) -> Result<(), LaunchError> {
+pub async fn launch_command(
+    command: &String,
+    args: Option<Vec<String>>,
+) -> Result<(), LaunchError> {
     let args = args.unwrap_or(vec![]);
     info!("Launching command: {command} {args:#?}");
-    let child = Command::new(command)
+    let status = tokio::process::Command::new(command)
         .args(args)
-        .spawn()
+        .status()
+        .await
         .map_err(LaunchError::Spawn)?;
-    reap_in_background(child);
+    debug!("command process exited with status: {status}");
     Ok(())
 }
 
-pub fn launch_url(
+pub async fn launch_url(
     url: &String,
     browser: &Option<String>,
     browsers: &Browsers,
@@ -54,12 +57,14 @@ pub fn launch_url(
         "Launching url: {} {:?} {url}",
         browser.command, browser.args
     );
-    let child = Command::new(&browser.command)
+    let status = tokio::process::Command::new(&browser.command)
         .args(&browser.args)
         .arg(url)
-        .spawn()
+        .status()
+        .await
         .map_err(LaunchError::Spawn)?;
-    reap_in_background(child);
+
+    debug!("url process exited with status: {status}");
     Ok(())
 }
 
@@ -74,13 +79,6 @@ fn resolve_browser<'a>(
         .and_then(|name| browsers.browsers.get(name))
         .or_else(|| browsers.browsers.get(&browsers.default))
         .ok_or(LaunchError::NoDefaultBrowser)
-}
-
-fn reap_in_background(mut child: Child) {
-    std::thread::spawn(move || match child.wait() {
-        Ok(status) => debug!("launched child proccess exited successfully with status {status}"),
-        Err(err) => error!("launched child proccess exited unsuccessfully: {err}"),
-    });
 }
 
 #[cfg(test)]
@@ -138,15 +136,15 @@ mod tests {
         assert!(matches!(result, Err(LaunchError::NoDefaultBrowser)));
     }
 
-    #[test]
-    fn launch_command_spawns_existing_binary() {
-        let result = launch_command(&"true".to_string(), None);
+    #[tokio::test]
+    async fn launch_command_spawns_existing_binary() {
+        let result = launch_command(&"true".to_string(), None).await;
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn launch_command_reports_error_for_missing_binary() {
-        let result = launch_command(&"this-binary-does-not-exist".to_string(), None);
+    #[tokio::test]
+    async fn launch_command_reports_error_for_missing_binary() {
+        let result = launch_command(&"this-binary-does-not-exist".to_string(), None).await;
         assert!(matches!(result, Err(LaunchError::Spawn(_))));
     }
 

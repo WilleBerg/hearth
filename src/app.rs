@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use iced::keyboard;
 use iced::widget::{column, container, row, Space};
 use iced::{window, Element, Length, Subscription, Task};
@@ -5,7 +7,7 @@ use log::error;
 
 use crate::config::browsers::Browsers;
 use crate::config::{AppAction, AppEntry, Config};
-use crate::platform::{launch_command, launch_url};
+use crate::platform::{launch_command, launch_url, LaunchError};
 use crate::ui::{carousel, theme};
 
 pub struct Hub {
@@ -19,6 +21,7 @@ pub enum Message {
     Quit,
     Navigate(carousel::Direction),
     Select,
+    LaunchFinished(Result<(), Arc<LaunchError>>),
 }
 
 impl Hub {
@@ -46,20 +49,36 @@ impl Hub {
                 if let Some(app) = self.apps.get(self.focused) {
                     match &app.action {
                         AppAction::Url { url, browser } => {
-                            if let Err(err) = launch_url(url, browser, &self.browsers) {
-                                error!("Failed to launch url: {err}");
-                            }
+                            let browsers = self.browsers.clone();
+                            let url = url.clone();
+                            let browser = browser.clone();
+                            return Task::perform(
+                                async move {
+                                    launch_url(&url, &browser, &browsers)
+                                        .await
+                                        .map_err(Arc::new)
+                                },
+                                Message::LaunchFinished,
+                            );
                         }
                         AppAction::Command { command, args } => {
-                            if let Err(err) = launch_command(command, args.clone()) {
-                                error!("Failed to launch command: {err}");
-                            }
+                            let command = command.clone();
+                            let args = args.clone();
+                            return Task::perform(
+                                async move { launch_command(&command, args).await.map_err(Arc::new) },
+                                Message::LaunchFinished,
+                            );
                         }
                     }
                 }
                 // TODO: Update top bar. Will need to create top bar first.
                 Task::none()
             }
+            Message::LaunchFinished(Err(err)) => {
+                error!("Failed to launch: {err}");
+                Task::none()
+            }
+            Message::LaunchFinished(Ok(())) => Task::none(),
         }
     }
 

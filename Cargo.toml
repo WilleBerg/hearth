@@ -6,7 +6,8 @@ publish = false
 
 [dependencies]
 env_logger = "0.11.11"
-iced = { version = "0.14", features = ["svg"] }
+iced = { version = "0.14", features = ["svg", "tokio"] }
 log = "0.4.34"
 serde = { version = "1.0.229", features = ["derive"] }
+tokio = { version = "1.53.1", features = ["process", "rt-multi-thread", "time", "macros"]}
 toml = "1.1.5"
