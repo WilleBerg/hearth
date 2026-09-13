@@ -1,32 +1,79 @@
 use iced::widget::{operation, row, scrollable};
 use iced::{Element, Task};
 
+use crate::app::LaunchState;
 use crate::config::AppEntry;
-use crate::ui::tile;
+use crate::ui::tile::{self, TileState, TileView};
 
 pub const SPACING: f32 = 24.0;
 const ID: &str = "carousel";
 
-pub fn view<'a, Message: 'a>(apps: &'a [AppEntry], focused: usize) -> Element<'a, Message> {
-    let tiles = apps
-        .iter()
-        .enumerate()
-        .map(|(index, app)| tile::view(app, index == focused));
+const LOADING_SPINNER_FRAMES: [char; 10] = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
-    let content = row(tiles).spacing(SPACING);
+pub struct Carousel {
+    apps: Vec<AppEntry>,
+    focused: usize,
+}
 
-    scrollable(content)
-        .id(ID)
-        .direction(scrollable::Direction::Horizontal(
-            scrollable::Scrollbar::hidden(),
-        ))
-        .into()
+impl Carousel {
+    pub fn new(apps: Vec<AppEntry>) -> Self {
+        Self { apps, focused: 0 }
+    }
+
+    pub fn focused_app(&self) -> Option<&AppEntry> {
+        self.apps.get(self.focused)
+    }
+
+    pub fn focused_index(&self) -> usize {
+        self.focused
+    }
+
+    pub fn navigate<Message: 'static>(&mut self, direction: Direction) -> Task<Message> {
+        self.focused = next_index(self.focused, direction, self.apps.len());
+        scroll_to_focused(self.focused, self.apps.len())
+    }
+
+    pub fn view<'a, Message: 'a>(
+        &'a self,
+        launch_state: &LaunchState,
+        frame: usize,
+    ) -> Element<'a, Message> {
+        let launch_state_index = launch_state.get_index();
+        let tiles = self.apps.iter().enumerate().map(|(index, app)| {
+            let tile_state = if launch_state_index == Some(index) {
+                match launch_state {
+                    LaunchState::Launching(_) => {
+                        let glyph = LOADING_SPINNER_FRAMES[frame % LOADING_SPINNER_FRAMES.len()];
+                        TileState::Launching(glyph)
+                    }
+                    LaunchState::Running(_) => TileState::Running,
+                    _ => TileState::Idle,
+                }
+            } else {
+                TileState::Idle
+            };
+            let tile_view = TileView {
+                focused: index == self.focused,
+                tile_state,
+            };
+            tile::view(app, tile_view)
+        });
+
+        let content = row(tiles).spacing(SPACING);
+
+        scrollable(content)
+            .id(ID)
+            .direction(scrollable::Direction::Horizontal(
+                scrollable::Scrollbar::hidden(),
+            ))
+            .into()
+    }
 }
 
 /// Scrolls only when focus reaches the first or last tile, snapping fully to
 /// that edge. Every other step leaves the scroll position untouched, so
 /// browsing tiles that are already visible doesn't shift the view at all.
-pub fn scroll_to_focused<Message: 'static>(focused: usize, total: usize) -> Task<Message> {
+fn scroll_to_focused<Message: 'static>(focused: usize, total: usize) -> Task<Message> {
     if focused == 0 {
         operation::snap_to(ID, operation::RelativeOffset::START)
     } else if total > 0 && focused == total - 1 {
@@ -44,7 +91,7 @@ pub enum Direction {
 
 /// Moves focus one step in `direction`, wrapping around at either end of
 /// `total` tiles.
-pub fn next_index(current: usize, direction: Direction, total: usize) -> usize {
+fn next_index(current: usize, direction: Direction, total: usize) -> usize {
     match direction {
         Direction::Left => (current + total - 1) % total,
         Direction::Right => (current + 1) % total,

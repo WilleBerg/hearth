@@ -38,39 +38,34 @@ pub async fn launch_command(
 ) -> Result<(), LaunchError> {
     let args = args.unwrap_or(vec![]);
     info!("Launching command: {command} {args:#?}");
-    let status = tokio::process::Command::new(command)
+    let output = tokio::process::Command::new(command)
         .args(args)
-        .status()
+        .output()
         .await
         .map_err(LaunchError::Spawn)?;
-    debug!("command process exited with status: {status}");
+    debug!("command process exited with status: {output:#?}");
     Ok(())
 }
 
-pub async fn launch_url(
-    url: &String,
-    browser: &Option<String>,
-    browsers: &Browsers,
-) -> Result<(), LaunchError> {
-    let browser = resolve_browser(browser, browsers)?;
+pub async fn launch_url(url: &String, browser: &BrowserEntry) -> Result<(), LaunchError> {
     info!(
         "Launching url: {} {:?} {url}",
         browser.command, browser.args
     );
-    let status = tokio::process::Command::new(&browser.command)
+    let output = tokio::process::Command::new(&browser.command)
         .args(&browser.args)
         .arg(url)
-        .status()
+        .output()
         .await
         .map_err(LaunchError::Spawn)?;
 
-    debug!("url process exited with status: {status}");
+    debug!("url process exited with status: {output:#?}");
     Ok(())
 }
 
 /// Picks the named browser profile, falling back to the configured default
 /// when no name is given or the named profile doesn't exist.
-fn resolve_browser<'a>(
+pub fn resolve_browser<'a>(
     browser: &Option<String>,
     browsers: &'a Browsers,
 ) -> Result<&'a BrowserEntry, LaunchError> {
