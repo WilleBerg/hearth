@@ -1,0 +1,14 @@
+# Named browser launch profiles. `default` picks the profile used when an
+# app's [apps.action] doesn't set its own `browser` name (see hub.toml).
+
+default = "chromium"
+
+[browsers.chromium]
+command = "chromium"
+args = [
+    "--kiosk",
+    "--force-device-scale-factor=1.25",
+    "--noerrdialogs",
+    "--disable-infobars",
+    "--no-first-run",
+]
